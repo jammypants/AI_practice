@@ -1,5 +1,5 @@
+//water jar breadth first search
 import java.util.*;
-// solving water jar problem using breadth first search
 public class WaterJarBFS {
   
     
