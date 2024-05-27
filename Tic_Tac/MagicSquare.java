@@ -1,3 +1,4 @@
+// Magic Square, Tic Tac Toe
 package AI_Assignment;
 import java.util.*;
 public class MagicSquare {
