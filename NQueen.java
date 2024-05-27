@@ -1,3 +1,4 @@
+// N Queens
 package AI_Assignment;
 import java.util.*;
 public class NQueen {
