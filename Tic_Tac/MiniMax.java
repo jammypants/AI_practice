@@ -1,154 +1,186 @@
-package UninformedSearch.IDDFS;
-
+package Tic_Tac;
 import java.util.*;
-
-public class EightPuzzleProblem {
-    private static final int SIZE = 3; // Size of the puzzle board
-    private static final int[][] GOAL_STATE = { { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 0 } }; // Goal state
-
-    public static void main(String[] args) {
-        EightPuzzleProblem problem = new EightPuzzleProblem();
-        int[][] initialState = { { 1, 2, 3 }, { 0, 4, 6 }, { 7, 5, 8 } };
-        System.out.println("\nIDDFS:");
-        printResult(problem.iddfs(initialState), problem.iddfsStates);
-    }
-
-    static class PuzzleState {
-        int[][] board;
-
-        PuzzleState(int[][] board) {
-            this.board = board;
-        }
-
-        public boolean equals(Object o) {
-            if (this == o)
-                return true;
-            if (o == null || getClass() != o.getClass())
-                return false;
-            PuzzleState state = (PuzzleState) o;
-            return Arrays.deepEquals(board, state.board);
-        }
-
-        public int hashCode() {
-            return Arrays.deepHashCode(board);
+public class Ai {
+    char[][] board;
+    Ai()
+    {
+        board = new char[3][3];
+        for(int i=0;i<3;i++)
+        {
+            for(int j=0;j<3;j++)
+            board[i][j] = '-';
         }
     }
-
-    int dlsStates = 0, iddfsStates = 0;
-
-    private List<PuzzleState> getNeighbors(PuzzleState state) {
-        List<PuzzleState> neighbors = new ArrayList<>();
-        int zeroRow = -1, zeroCol = -1;
-        // Find the position of the zero (empty) tile
-        outerloop: for (int i = 0; i < SIZE; i++) {
-            for (int j = 0; j < SIZE; j++) {
-                if (state.board[i][j] == 0) {
-                    zeroRow = i;
-                    zeroCol = j;
-                    break outerloop;
+    static void display(char[][] board)
+    {
+        for(int i=0;i<3;i++)
+        {
+            for(int j=0;j<3;j++)
+            System.out.print(board[i][j]+" ");
+            System.out.println();
+        }
+    }
+    static int checkWin(char[][] board)
+    {
+        // rows
+        for(int i=0;i<3;i++)
+        {
+            if(board[i][0]==board[i][1] && board[i][1]==board[i][2] && board[i][0]!='-')
+            return (board[i][0]=='X')? 1:-1;
+        }
+        //columns
+        for(int i=0;i<3;i++)
+        {
+            if(board[0][i]==board[1][i] && board[1][i]==board[2][i] && board[0][i]!='-')
+            return (board[0][i]=='X')? 1:-1;
+        }
+        //left diagnol
+        if(board[0][0]==board[1][1] && board[1][1]==board[2][2] && board[0][0]!='-')
+        return (board[0][0]=='X')? 1:-1;
+        //right diagnol
+        if (board[0][2] != ' ' && board[1][1] == board[0][2] && board[2][0] == board[0][2])
+        return (board[0][2] == 'X') ? 1 : -1;
+        //check for draw
+        boolean draw = true;
+        for(int i=0;i<3;i++)
+        {
+            for(int j=0;j<3;j++)
+            {
+                if(board[i][j]=='-')
+                {
+                    draw=false;
+                    break;
                 }
             }
         }
-
-        // Generate neighbors by moving the zero tile
-        int[][] moves = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } };
-        for (int[] move : moves) {
-            int newRow = zeroRow + move[0];
-            int newCol = zeroCol + move[1];
-            if (isValidMove(newRow, newCol)) {
-                int[][] newBoard = copyBoard(state.board);
-                swap(newBoard, zeroRow, zeroCol, newRow, newCol);
-                neighbors.add(new PuzzleState(newBoard));
+        if(draw)
+        return 0;
+        // game is still on, no one is winning
+        return 2;
+    }
+    static int minimax(char[][] board,int n_moves,char turn)// board represents current board state, depth of the tree and whether its the maximizers turn or minimizers
+    {
+        int score = checkWin(board);//check if someone has already won
+        if(score!=2)// won/lost/draw anyone of these has occurred
+        {
+            return score*10-score*n_moves;// to return a valid score with respect to the depth of the tree
+        }
+        if(turn=='X')// maximizer
+        {
+            int bestScore = Integer.MIN_VALUE;
+            for(int i=0;i<3;i++)
+            {
+                for(int j=0;j<3;j++)
+                {
+                    if(board[i][j]=='-')
+                    {
+                        board[i][j] = 'X';// place X on the empty spot
+                        score = minimax(board, n_moves+1,'O');
+                        board[i][j] = '-';
+                        bestScore = Math.max(score, bestScore);
+                    }
+                }
+            }
+            return bestScore;
+        }
+        else// minimizer
+        {
+            int bestScore = Integer.MAX_VALUE;
+            for(int i=0;i<3;i++)
+            {
+                for(int j=0;j<3;j++)
+                {
+                    if(board[i][j]=='-')
+                    {
+                        board[i][j] = 'O';// place O on the empty spot
+                        score = minimax(board, n_moves+1,'X');
+                        board[i][j] = '-';
+                        bestScore = Math.min(score,bestScore);
+                    }
+                }
+            }
+            return bestScore;
+        }
+    }
+    static void computerMove(char[][] board)
+    {
+        int bestScore = Integer.MIN_VALUE;
+        int bestrow= -1;
+        int bestcolumn = -1;
+        for(int i=0;i<3;i++)
+        {
+            for(int j=0;j<3;j++)
+            {
+                if(board[i][j]=='-')//empty spot
+                {
+                    board[i][j] = 'X';// place X on the spot and run minimax
+                    int score = minimax(board,0,'O');
+                    if(score>bestScore)
+                    {
+                        bestScore = score;
+                        bestrow = i;
+                        bestcolumn = j;
+                    }
+                    board[i][j] = '-';// once we've explored that node we undo it to check further possibilities
+                }
             }
         }
-        return neighbors;
+        board[bestrow][bestcolumn] = 'X';
     }
-
-    private boolean isValidMove(int row, int col) {
-        return row >= 0 && row < SIZE && col >= 0 && col < SIZE;
-    }
-
-    private int[][] copyBoard(int[][] board) {
-        int[][] newBoard = new int[SIZE][SIZE];
-        for (int i = 0; i < SIZE; i++) {
-            System.arraycopy(board[i], 0, newBoard[i], 0, SIZE);
-        }
-        return newBoard;
-    }
-
-    private void swap(int[][] board, int row1, int col1, int row2, int col2) {
-        int temp = board[row1][col1];
-        board[row1][col1] = board[row2][col2];
-        board[row2][col2] = temp;
-    }
-
-    private List<PuzzleState> constructPath(Map<PuzzleState, PuzzleState> parentMap, PuzzleState goal) {
-        List<PuzzleState> path = new ArrayList<>();
-        for (PuzzleState at = goal; at != null; at = parentMap.get(at))
-            path.add(at);
-        Collections.reverse(path);
-        return path;
-    }
-
-    public List<PuzzleState> dls(int[][] initialState, int limit) {
-        return dlsRecursive(new PuzzleState(initialState), new HashSet<>(), new HashMap<>(), limit);
-    }
-
-    private List<PuzzleState> dlsRecursive(PuzzleState current, Set<PuzzleState> visited,
-            Map<PuzzleState, PuzzleState> parentMap, int limit) {
-        dlsStates++;
-        if (isGoalState(current))
-            return constructPath(parentMap, current);
-        if (limit == 0)
-            return Collections.emptyList();
-        visited.add(current);
-        for (PuzzleState neighbor : getNeighbors(current)) {
-            if (!visited.contains(neighbor)) {
-                parentMap.put(neighbor, current);
-                List<PuzzleState> result = dlsRecursive(neighbor, visited, parentMap, limit - 1);
-                if (!result.isEmpty())
-                    return result;
+    public static void main(String[] Args)
+    {
+        Ai ob = new Ai();
+        display(ob.board);
+        int turn=1;
+        while(turn<=9)
+        {
+            if(turn%2!=0)
+            {
+                computerMove(ob.board);
+                System.out.println("Computer move played now user");
+                display(ob.board);
+                turn++;
             }
-        }
-        visited.remove(current);
-        return Collections.emptyList();
-    }
-
-    public List<PuzzleState> iddfs(int[][] initialState) {
-        List<PuzzleState> result;
-        int depth;
-        for (depth = 0;; depth++) {
-            dlsStates = 0;
-            result = dls(initialState, depth);
-            iddfsStates += dlsStates;
-            if (!result.isEmpty())
-                return result;
-        }
-    }
-
-    private boolean isGoalState(PuzzleState state) {
-        return Arrays.deepEquals(state.board, GOAL_STATE);
-    }
-
-    private static void printResult(List<PuzzleState> result, int statesExplored) {
-        if (result.isEmpty()) {
-            System.out.println("No solution found.");
-        } else {
-            for (int i = 0; i < result.size(); i++) {
-                System.out.println("Step " + i + ":");
-                printBoard(result.get(i).board);
+            else
+            {
+                Scanner sc = new Scanner(System.in);
+                System.out.println("Enter row and column");
+                int row = sc.nextInt();
+                int column = sc.nextInt();
+                if(ob.board[row][column]=='-')
+                {
+                    ob.board[row][column] = 'O';
+                    turn++;
+                }
+                else
+                {
+                    System.out.println("Place is not empty");
+                    continue;
+                }
             }
-            System.out.println("Total states explored: " + statesExplored);
-        }
-    }
-
-    private static void printBoard(int[][] board) {
-        for (int i = 0; i < SIZE; i++) {
-            for (int j = 0; j < SIZE; j++) {
-                System.out.print(board[i][j] + " ");
+            int win = checkWin(ob.board);
+            if(win==1)
+            {
+                display(ob.board);
+                System.out.println("AI wins!");
+                break;
             }
-            System.out.println();
+            if(win==-1)
+            {
+                display(ob.board);
+                System.out.println("User wins!");
+                break;
+            }
+            if(turn==9)
+            {
+                if(win==0)
+            {
+                display(ob.board);
+                System.out.println("Its a draw");
+                break;
+            }
+            }
+            
         }
-        System.out.println();
     }
 }
