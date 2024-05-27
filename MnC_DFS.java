@@ -1,3 +1,4 @@
+//MnC using DFS
 package AI_Assignment;
 import java.util.*;
 public class MnC {
